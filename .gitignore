@@ -1,0 +1,21 @@
+# Python embeddable distribution (downloaded on-demand via Setup_Portable_Python.ps1)
+python_embed/
+*.zip
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# Forensic Output Reports (keep generated host triage scans private)
+Reports/*
+!Reports/.gitkeep
+*.log
+
+# Windows / IDE Artifacts
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini

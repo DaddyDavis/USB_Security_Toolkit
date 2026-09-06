@@ -1,0 +1,11 @@
+# ==============================================================================
+# USB SECURITY TOOLKIT - INDICATORS OF COMPROMISE (IOC) HASH LIST
+# ==============================================================================
+# Add known malicious MD5 or SHA-256 hashes below (one per line).
+# Lines starting with '#' or empty lines are ignored.
+# Hashes are case-insensitive.
+#
+# Examples:
+# 44d88612fea8a8f36de82e1278abb02f                     # Example MD5 (EICAR standard AV test file)
+# 275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f # Example SHA-256 (EICAR)
+#
