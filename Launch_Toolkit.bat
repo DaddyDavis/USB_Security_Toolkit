@@ -61,6 +61,7 @@ echo    [T] Process Tree and Anomaly Hunter      (PowerShell - Parent-Child, Enc
 echo    [D] Domain and Network Share Recon       (PowerShell - Kerberos, SMB Shares)
 echo    [F] Prefetch Execution Forensics         (PowerShell - MAM Decompress, Run Counts)
 echo    [E] Defense Evasion & Tampering Hunter   (PowerShell - Defender, Firewall, Logging)
+echo    [Z] Automated SOC Analyst Briefing       (Python - Threat Scoring & Remediation)
 echo    [H] Generate Executive HTML Report       (Python - Unified Threat Dashboard)
 echo.
 echo    --- AUTOMATION AND REMEDIATION ---
@@ -73,7 +74,7 @@ echo.
 echo ==============================================================================================
 
 set "USER_CHOICE="
-set /p "USER_CHOICE=  [?] Select an option [1-9, S, T, D, F, E, H, A, R, O, P, 0]: "
+set /p "USER_CHOICE=  [?] Select an option [1-9, S, T, D, F, E, Z, H, A, R, O, P, 0]: "
 
 if not defined USER_CHOICE goto MENU
 set "USER_CHOICE=!USER_CHOICE: =!"
@@ -92,6 +93,7 @@ if /i "!USER_CHOICE!"=="T" goto OP_TREE
 if /i "!USER_CHOICE!"=="D" goto OP_DOMAIN
 if /i "!USER_CHOICE!"=="F" goto OP_PREFETCH
 if /i "!USER_CHOICE!"=="E" goto OP_DEFENSE
+if /i "!USER_CHOICE!"=="Z" goto OP_ANALYZE
 if /i "!USER_CHOICE!"=="H" goto OP_HTML
 if /i "!USER_CHOICE!"=="A" goto OP_SWEEP
 if /i "!USER_CHOICE!"=="R" goto OP_REMEDIATE
@@ -259,6 +261,27 @@ set "DUMMY="
 set /p "DUMMY=  Press Enter to return to menu... "
 goto MENU
 
+:OP_ANALYZE
+cls
+if "!PY_CMD!"=="" (
+    where python >nul 2>&1
+    if !ERRORLEVEL! equ 0 (
+        set "PY_CMD=python"
+    ) else (
+        echo [-] Python runtime required for Automated Threat Analyst. Run option [P] first.
+        echo.
+        set "DUMMY="
+        set /p "DUMMY=  Press Enter to return to menu... "
+        goto MENU
+    )
+)
+echo [*] Executing Automated DFIR SOC Analyst Engine with !PY_CMD!...
+"!PY_CMD!" "%~dp0Analyze_Reports.py"
+echo.
+set "DUMMY="
+set /p "DUMMY=  Press Enter to return to menu... "
+goto MENU
+
 :OP_HTML
 cls
 if "!PY_CMD!"=="" (
@@ -321,7 +344,8 @@ echo [11/12] Running Browser History, Downloads, and ShimCache Forensics...
 "!PY_CMD!" "%~dp009_Browser_Artifacts.py"
 "!PY_CMD!" "%~dp011_ShimCache_Parser.py"
 echo.
-echo [12/12] Generating Unified Executive HTML Forensic Dashboard...
+echo [12/12] Running Automated Threat Analyst Engine & Executive HTML Dashboard...
+"!PY_CMD!" "%~dp0Analyze_Reports.py"
 "!PY_CMD!" "%~dp0Generate_HTML_Report.py"
 goto END_SWEEP_PY
 

@@ -85,7 +85,16 @@ def generate_dashboard():
         "ioc": get_latest_file("IOC_Scan_*.txt")
     }
 
-    # 2. Extract Key Threat Indicators & Metrics
+    # 2. Run Automated SOC Threat Analyst Correlation
+    try:
+        import Analyze_Reports
+        analyst_findings = Analyze_Reports.run_correlation()
+        ai_brief = Analyze_Reports.try_ollama_briefing(analyst_findings)
+    except Exception as e:
+        analyst_findings = None
+        ai_brief = None
+
+    # 3. Extract Key Threat Indicators & Metrics
     total_artifacts = 0
     high_alerts = 0
     medium_warns = 0
@@ -100,7 +109,11 @@ def generate_dashboard():
             medium_warns += count_occurrences(txt, r'WARN|EXCLUSION')
 
     # Threat Assessment
-    if high_alerts > 5:
+    if analyst_findings:
+        overall_status = analyst_findings["threat_level"]
+        status_color = analyst_findings["threat_color"]
+        status_badge = f"THREAT INDEX: {analyst_findings['threat_score']}/100"
+    elif high_alerts > 5:
         overall_status = "CRITICAL ELEVATED THREAT"
         status_color = "#ef4444"
         status_badge = "CRITICAL COMPROMISE RISK"
@@ -113,7 +126,7 @@ def generate_dashboard():
         status_color = "#10b981"
         status_badge = "LOW RISK"
 
-    # 3. Generate HTML Content
+    # 4. Generate HTML Content
     output_html_file = os.path.join(REPORTS_DIR, f"Executive_Forensic_Report_{hostname}_{timestamp_file}.html")
 
     html_parts = [f"""<!DOCTYPE html>
@@ -221,9 +234,60 @@ def generate_dashboard():
       <span class="mitre-tag">T1049: System Network Connections Discovery</span>
     </div>
   </div>
-
-  <!-- Forensic Modules Sections -->
 """]
+
+    # Render Automated SOC Analyst Briefing Card
+    if analyst_findings:
+        strengths_html = "".join([f'<li style="color: #10b981; margin-bottom: 4px;">✓ {html.escape(s)}</li>' for s in analyst_findings["hardened_controls"]])
+        findings_html = "".join([f'<li style="color: #ef4444; font-weight: 600; margin-bottom: 4px;">⚠ {html.escape(f)}</li>' for f in analyst_findings["risk_exposures"]])
+        remediation_html = "".join([f'<div style="background: #090d16; border-left: 3px solid #06b6d4; padding: 6px 12px; margin-bottom: 6px; font-family: monospace; font-size: 12px; color: #38bdf8;">PS&gt; {html.escape(r)}</div>' for r in analyst_findings["remediation_actions"]])
+        
+        ai_banner = ""
+        if ai_brief:
+            ai_banner = f"""
+      <div style="background: #0f172a; border: 1px solid #38bdf8; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px;">
+        <div style="color: #38bdf8; font-weight: 700; font-size: 13px; margin-bottom: 4px;">🤖 Local AI SOC Lead Assessment (via {ai_brief[0]}):</div>
+        <div style="color: #e2e8f0; font-size: 13px; white-space: pre-wrap;">{html.escape(ai_brief[1])}</div>
+      </div>"""
+
+        html_parts.append(f"""
+  <!-- Automated SOC Analyst Briefing -->
+  <div style="background: var(--surface); border: 2px solid {status_color}; border-radius: 8px; padding: 20px; margin-bottom: 28px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+      <h2 style="font-size: 18px; color: #fff; display: flex; align-items: center; gap: 8px;">
+        🛡️ AUTOMATED DFIR SOC ANALYST INCIDENT BRIEFING
+      </h2>
+      <span style="font-size: 13px; font-weight: 700; color: {status_color}; background: {status_color}22; padding: 4px 12px; border-radius: 9999px; border: 1px solid {status_color};">
+        THREAT SCORE: {analyst_findings['threat_score']} / 100
+      </span>
+    </div>
+
+    {ai_banner}
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 16px;">
+      <div>
+        <h3 style="font-size: 13px; text-transform: uppercase; color: #10b981; margin-bottom: 8px;">Key Defensive Strengths</h3>
+        <ul style="list-style: none; font-size: 13px;">
+          {strengths_html}
+        </ul>
+      </div>
+      <div>
+        <h3 style="font-size: 13px; text-transform: uppercase; color: #ef4444; margin-bottom: 8px;">Security Exposures &amp; Blind Spots</h3>
+        <ul style="list-style: none; font-size: 13px;">
+          {findings_html if findings_html else '<li style="color: #10b981;">✓ Zero critical risk exposures identified.</li>'}
+        </ul>
+      </div>
+    </div>
+
+    <div>
+      <h3 style="font-size: 13px; text-transform: uppercase; color: #06b6d4; margin-bottom: 8px;">Prioritized Remediation Action Plan (PowerShell)</h3>
+      {remediation_html if remediation_html else '<div style="color: #94a3b8; font-size: 13px;">No immediate remediation actions required. System hardened.</div>'}
+    </div>
+  </div>
+""")
+
+    # Forensic Modules Sections
+
 
     # Module definitions to display
     display_modules = [

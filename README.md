@@ -36,6 +36,7 @@ A modular, standalone Windows Incident Response (IR) and Digital Forensics triag
 | `13_Domain_Recon.ps1` | PowerShell | Active Directory reconnaissance: Domain Controllers, domain trusts, and AD forest structure. |
 | `14_Prefetch_Hunter.ps1` | PowerShell | In-memory MAM decompression for Windows 10/11 Prefetch (`.pf`), run counts, and timeline analysis. |
 | `15_Defense_Evasion.ps1` | PowerShell | Audits security control tampering: Defender real-time bypasses, injected exclusions, WDigest, and UAC. |
+| `Analyze_Reports.py` | Python | Automated DFIR threat correlation engine: heuristic scoring (0-100) and prioritized remediation. |
 | `Generate_HTML_Report.py` | Python | Compiles all triage logs into a dark-mode, single-file offline HTML executive forensic dashboard. |
 
 ---
