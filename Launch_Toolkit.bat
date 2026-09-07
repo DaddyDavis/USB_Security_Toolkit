@@ -60,8 +60,12 @@ echo    [S] ShimCache Execution Forensics        (Python - Historical Runs, Dele
 echo    [T] Process Tree and Anomaly Hunter      (PowerShell - Parent-Child, Encoded Cmds)
 echo    [D] Domain and Network Share Recon       (PowerShell - Kerberos, SMB Shares)
 echo    [F] Prefetch Execution Forensics         (PowerShell - MAM Decompress, Run Counts)
-echo    [E] Defense Evasion & Tampering Hunter   (PowerShell - Defender, Firewall, Logging)
-echo    [Z] Automated SOC Analyst Briefing       (Python - Threat Scoring & Remediation)
+echo    [E] Defense Evasion and Tampering Hunter (PowerShell - Defender, Firewall, Logging)
+echo    [B] BAM/DAM User Execution Forensics     (PowerShell - Per-User Registry Ledgers)
+echo    [C] Network Beacon and C2 Socket Hunter  (PowerShell - WAN Sockets, Port Audits)
+echo    [U] User Activity and Removable Media    (PowerShell - LNKs, JumpLists, USB Trails)
+echo    [W] Live Field Sentinel Watch Mode       (PowerShell - Real-Time Process and USB HUD)
+echo    [Z] Automated SOC Analyst Briefing       (Python - Threat Scoring and Remediation)
 echo    [H] Generate Executive HTML Report       (Python - Unified Threat Dashboard)
 echo.
 echo    --- AUTOMATION AND REMEDIATION ---
@@ -74,7 +78,7 @@ echo.
 echo ==============================================================================================
 
 set "USER_CHOICE="
-set /p "USER_CHOICE=  [?] Select an option [1-9, S, T, D, F, E, Z, H, A, R, O, P, 0]: "
+set /p "USER_CHOICE=  [?] Select an option [1-9, S, T, D, F, E, B, C, U, W, Z, H, A, R, O, P, 0]: "
 
 if not defined USER_CHOICE goto MENU
 set "USER_CHOICE=!USER_CHOICE: =!"
@@ -93,6 +97,10 @@ if /i "!USER_CHOICE!"=="T" goto OP_TREE
 if /i "!USER_CHOICE!"=="D" goto OP_DOMAIN
 if /i "!USER_CHOICE!"=="F" goto OP_PREFETCH
 if /i "!USER_CHOICE!"=="E" goto OP_DEFENSE
+if /i "!USER_CHOICE!"=="B" goto OP_BAM
+if /i "!USER_CHOICE!"=="C" goto OP_BEACON
+if /i "!USER_CHOICE!"=="U" goto OP_USERACT
+if /i "!USER_CHOICE!"=="W" goto OP_SENTINEL
 if /i "!USER_CHOICE!"=="Z" goto OP_ANALYZE
 if /i "!USER_CHOICE!"=="H" goto OP_HTML
 if /i "!USER_CHOICE!"=="A" goto OP_SWEEP
@@ -261,6 +269,42 @@ set "DUMMY="
 set /p "DUMMY=  Press Enter to return to menu... "
 goto MENU
 
+:OP_BAM
+cls
+echo [*] Executing 16_BAM_Hunter.ps1...
+powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp016_BAM_Hunter.ps1"
+echo.
+set "DUMMY="
+set /p "DUMMY=  Press Enter to return to menu... "
+goto MENU
+
+:OP_BEACON
+cls
+echo [*] Executing 17_Beacon_Hunter.ps1...
+powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp017_Beacon_Hunter.ps1"
+echo.
+set "DUMMY="
+set /p "DUMMY=  Press Enter to return to menu... "
+goto MENU
+
+:OP_USERACT
+cls
+echo [*] Executing 18_User_Activity.ps1...
+powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp018_User_Activity.ps1"
+echo.
+set "DUMMY="
+set /p "DUMMY=  Press Enter to return to menu... "
+goto MENU
+
+:OP_SENTINEL
+cls
+echo [*] Executing 19_Live_Sentinel.ps1...
+powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp019_Live_Sentinel.ps1"
+echo.
+set "DUMMY="
+set /p "DUMMY=  Press Enter to return to menu... "
+goto MENU
+
 :OP_ANALYZE
 cls
 if "!PY_CMD!"=="" (
@@ -306,45 +350,54 @@ goto MENU
 :OP_SWEEP
 cls
 echo ==============================================================================================
-echo   [*] COMMENCING FULL AUTOMATED FORENSIC AND TRIAGE FIELD SWEEP (12 MODULES)
+echo   [*] COMMENCING FULL AUTOMATED FORENSIC AND TRIAGE FIELD SWEEP (15 MODULES)
 echo ==============================================================================================
 echo.
-echo [1/12] Running Live Host Posture Triage...
+echo [1/15] Running Live Host Posture Triage...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp001_Triage_Windows.ps1"
 echo.
-echo [2/12] Running USB Connection Forensics...
+echo [2/15] Running USB Connection Forensics...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp003_USB_Forensics.ps1"
 echo.
-echo [3/12] Running Advanced Persistence Hunter...
+echo [3/15] Running Advanced Persistence Hunter...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp004_Persistence_Hunter.ps1"
 echo.
-echo [4/12] Running Volatile Memory and Session Snapshot...
+echo [4/15] Running Volatile Memory and Session Snapshot...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp005_Volatile_Evidence.ps1"
 echo.
-echo [5/12] Running Windows Security Event Log Hunter...
+echo [5/15] Running Windows Security Event Log Hunter...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp007_Event_Log_Hunter.ps1"
 echo.
-echo [6/12] Running Wi-Fi Profiles and Stored Credentials...
+echo [6/15] Running Wi-Fi Profiles and Stored Credentials...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp008_WiFi_Forensics.ps1"
 echo.
-echo [7/12] Running Process Tree and Anomaly Hunter...
+echo [7/15] Running Process Tree and Anomaly Hunter...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp012_Process_Tree_Hunter.ps1"
 echo.
-echo [8/12] Running Domain and Network Share Recon...
+echo [8/15] Running Domain and Network Share Recon...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp013_Domain_Recon.ps1"
 echo.
-echo [9/12] Running Prefetch Execution Forensics...
+echo [9/15] Running Prefetch Execution Forensics...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp014_Prefetch_Hunter.ps1"
 echo.
-echo [10/12] Running Defense Evasion and Tampering Audit...
+echo [10/15] Running Defense Evasion and Tampering Audit...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp015_Defense_Evasion.ps1"
 echo.
+echo [11/15] Running BAM/DAM User Execution Forensics...
+powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp016_BAM_Hunter.ps1"
+echo.
+echo [12/15] Running Network Beaconing and C2 Socket Audit...
+powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp017_Beacon_Hunter.ps1"
+echo.
+echo [13/15] Running User Activity and Removable Media Footprints...
+powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp018_User_Activity.ps1"
+echo.
 if "!PY_CMD!"=="" goto SKIP_SWEEP_PY
-echo [11/12] Running Browser History, Downloads, and ShimCache Forensics...
+echo [14/15] Running Browser History, Downloads, and ShimCache Forensics...
 "!PY_CMD!" "%~dp009_Browser_Artifacts.py"
 "!PY_CMD!" "%~dp011_ShimCache_Parser.py"
 echo.
-echo [12/12] Running Automated Threat Analyst Engine & Executive HTML Dashboard...
+echo [15/15] Running Automated Threat Analyst Engine & Executive HTML Dashboard...
 "!PY_CMD!" "%~dp0Analyze_Reports.py"
 "!PY_CMD!" "%~dp0Generate_HTML_Report.py"
 goto END_SWEEP_PY
@@ -387,14 +440,6 @@ goto MENU
 :OP_EXIT
 cls
 echo ==============================================================================================
-echo   [*] Terminal Session Paused. Window is preserved and will NOT close.
-echo       Press Enter to return to the interactive toolkit menu,
-echo       or manually close this window when you are completely finished.
+echo   [*] Exiting USB Security Toolkit Console. Stay safe!
 echo ==============================================================================================
-echo.
-set "DUMMY="
-set /p "DUMMY=  Press Enter to return to menu... "
-goto MENU
-
-:: Ultimate fallback
-cmd /k
+exit /b 0

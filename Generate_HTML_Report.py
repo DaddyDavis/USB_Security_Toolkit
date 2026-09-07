@@ -82,7 +82,11 @@ def generate_dashboard():
         "domain": get_latest_file("Domain_Recon_*.txt"),
         "prefetch": get_latest_file("Prefetch_Hunter_*.txt"),
         "defense": get_latest_file("Defense_Evasion_*.txt"),
-        "ioc": get_latest_file("IOC_Scan_*.txt")
+        "ioc": get_latest_file("IOC_Scan_*.txt"),
+        "bam": get_latest_file("BAM_Execution_Hunter_*.txt"),
+        "beacon": get_latest_file("Beacon_Hunter_*.txt"),
+        "user_activity": get_latest_file("User_Activity_*.txt"),
+        "sentinel": get_latest_file("Live_Sentinel_*.txt")
     }
 
     # 2. Run Automated SOC Threat Analyst Correlation
@@ -232,6 +236,9 @@ def generate_dashboard():
       <span class="mitre-tag">T1052: Exfiltration Over Physical Medium (USBSTOR)</span>
       <span class="mitre-tag">T1082: System Information Discovery</span>
       <span class="mitre-tag">T1049: System Network Connections Discovery</span>
+      <span class="mitre-tag">T1071: C2 Socket & Beaconing Inspection</span>
+      <span class="mitre-tag">T1083: File & Directory Discovery (User LNK / JumpLists)</span>
+      <span class="mitre-tag">T1204: User Execution (BAM / DAM Ledgers)</span>
     </div>
   </div>
 """]
@@ -239,34 +246,37 @@ def generate_dashboard():
     # Render Automated SOC Analyst Briefing Card
     if analyst_findings:
         strengths_html = "".join([f'<li style="color: #10b981; margin-bottom: 4px;">✓ {html.escape(s)}</li>' for s in analyst_findings["hardened_controls"]])
-        findings_html = "".join([f'<li style="color: #ef4444; font-weight: 600; margin-bottom: 4px;">⚠ {html.escape(f)}</li>' for f in analyst_findings["risk_exposures"]])
-        remediation_html = "".join([f'<div style="background: #090d16; border-left: 3px solid #06b6d4; padding: 6px 12px; margin-bottom: 6px; font-family: monospace; font-size: 12px; color: #38bdf8;">PS&gt; {html.escape(r)}</div>' for r in analyst_findings["remediation_actions"]])
+        findings_html = "".join([f'<li style="color: #f87171; margin-bottom: 4px;">⚠ {html.escape(f)}</li>' for f in analyst_findings["risk_exposures"]])
+        remediation_html = "".join([f'<div style="background: #090d16; border-left: 3px solid #06b6d4; padding: 6px 10px; margin-bottom: 6px; font-family: monospace; color: #38bdf8; font-size: 12px;">PS&gt; {html.escape(r)}</div>' for r in analyst_findings["remediation_actions"]])
         
         ai_banner = ""
         if ai_brief:
             ai_banner = f"""
-      <div style="background: #0f172a; border: 1px solid #38bdf8; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px;">
-        <div style="color: #38bdf8; font-weight: 700; font-size: 13px; margin-bottom: 4px;">🤖 Local AI SOC Lead Assessment (via {ai_brief[0]}):</div>
-        <div style="color: #e2e8f0; font-size: 13px; white-space: pre-wrap;">{html.escape(ai_brief[1])}</div>
-      </div>"""
+      <div style="background: #1e1b4b; border: 1px solid #6366f1; border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+        <div style="font-size: 11px; font-weight: 700; color: #a5b4fc; text-transform: uppercase; margin-bottom: 4px;">
+          🤖 Local AI SOC Analyst Synthesis (via {ai_brief[0]})
+        </div>
+        <div style="font-size: 13px; color: #e0e7ff; line-height: 1.4;">{html.escape(ai_brief[1])}</div>
+      </div>
+"""
 
         html_parts.append(f"""
-  <!-- Automated SOC Analyst Briefing -->
-  <div style="background: var(--surface); border: 2px solid {status_color}; border-radius: 8px; padding: 20px; margin-bottom: 28px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
-      <h2 style="font-size: 18px; color: #fff; display: flex; align-items: center; gap: 8px;">
-        🛡️ AUTOMATED DFIR SOC ANALYST INCIDENT BRIEFING
+  <!-- SOC Threat Analyst Briefing Card -->
+  <div style="background: var(--surface); border: 2px solid {status_color}; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h2 style="font-size: 17px; font-weight: 800; color: #fff;">
+        🛡️ AUTOMATED DFIR SOC ANALYST BRIEFING
       </h2>
-      <span style="font-size: 13px; font-weight: 700; color: {status_color}; background: {status_color}22; padding: 4px 12px; border-radius: 9999px; border: 1px solid {status_color};">
-        THREAT SCORE: {analyst_findings['threat_score']} / 100
+      <span class="badge" style="background: {status_color}22; color: {status_color}; border: 1px solid {status_color};">
+        THREAT SCORE: {analyst_findings['threat_score']}/100
       </span>
     </div>
 
     {ai_banner}
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 16px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
       <div>
-        <h3 style="font-size: 13px; text-transform: uppercase; color: #10b981; margin-bottom: 8px;">Key Defensive Strengths</h3>
+        <h3 style="font-size: 13px; text-transform: uppercase; color: #10b981; margin-bottom: 8px;">Defensive Strengths Verified</h3>
         <ul style="list-style: none; font-size: 13px;">
           {strengths_html}
         </ul>
@@ -286,11 +296,12 @@ def generate_dashboard():
   </div>
 """)
 
-    # Forensic Modules Sections
-
-
     # Module definitions to display
     display_modules = [
+        ("BAM/DAM Execution Forensics (Per-User Registry Ledger)", report_map.get("bam"), "T1204 / T1059"),
+        ("Network Beaconing & C2 Socket Threat Hunter", report_map.get("beacon"), "T1071 / T1049"),
+        ("User Activity & Removable Media Forensic Trails", report_map.get("user_activity"), "T1052 / T1083"),
+        ("Live Field Sentinel Real-Time Watch Ledger", report_map.get("sentinel"), "T1059 / T1052"),
         ("Prefetch Execution Forensics (MAM Decompression)", report_map["prefetch"], "T1059 / T1204"),
         ("Defense Evasion & Security Tampering Audit", report_map["defense"], "T1562"),
         ("Process Tree & Anomaly Lineage Hunter", report_map["tree"], "T1059 / T1036"),

@@ -45,7 +45,12 @@ def run_correlation():
         "lolbins_executed": [],
         "open_external_ports": [],
         "exclusions": [],
-        "stealth_tasks": []
+        "stealth_tasks": [],
+        "bam_executions": [],
+        "c2_alerts": [],
+        "removable_footprints": [],
+        "recent_scripts": [],
+        "active_wan_sockets": 0
     }
 
     triage_txt = read_file(get_latest_file("Triage_*.txt"))
@@ -55,6 +60,10 @@ def run_correlation():
     prefetch_txt = read_file(get_latest_file("Prefetch_Hunter_*.txt"))
     process_txt = read_file(get_latest_file("Process_Hunter_*.txt"))
     events_txt = read_file(get_latest_file("EventLogs_*.txt"))
+    bam_txt = read_file(get_latest_file("BAM_Execution_Hunter_*.txt"))
+    beacon_txt = read_file(get_latest_file("Beacon_Hunter_*.txt"))
+    useract_txt = read_file(get_latest_file("User_Activity_*.txt"))
+    sentinel_txt = read_file(get_latest_file("Live_Sentinel_*.txt"))
 
     score = 0
 
@@ -145,6 +154,45 @@ def run_correlation():
     for exe, runs, last_time in lol_matches:
         findings["lolbins_executed"].append(f"{exe} ({runs} runs, latest: {last_time})")
 
+    # 6. Evaluate BAM Execution Forensics
+    if bam_txt:
+        bam_runs = re.findall(r'\[REMOVABLE/USB\]\s+(.+)', bam_txt)
+        for br in bam_runs:
+            score += 15
+            findings["risk_exposures"].append(f"BAM Forensic Audit: Binary executed from removable media: {br.strip()}")
+            findings["bam_executions"].append(f"[USB] {br.strip()}")
+        bam_total = re.search(r'Total Entries Cataloged\s+:\s+(\d+)', bam_txt)
+        if bam_total:
+            findings["hardened_controls"].append(f"BAM/DAM Execution Forensics active ({bam_total.group(1)} ledger entries)")
+
+    # 7. Evaluate Network Beaconing & C2 Sockets
+    if beacon_txt:
+        wan_count_match = re.search(r'Total Active Outbound Sockets\s+:\s+(\d+)', beacon_txt)
+        if wan_count_match:
+            findings["active_wan_sockets"] = int(wan_count_match.group(1))
+
+        if "DETECTED" in beacon_txt and "SUSPICIOUS NETWORK SOCKET" in beacon_txt:
+            c2_matches = re.findall(r'Destination\s+:\s+(.+)', beacon_txt)
+            score += 35
+            for c2 in c2_matches:
+                findings["c2_alerts"].append(c2.strip())
+                findings["risk_exposures"].append(f"CRITICAL: Active C2 Beaconing / High-Risk Socket: {c2.strip()}")
+        else:
+            findings["hardened_controls"].append(f"Network beaconing audit clean ({findings['active_wan_sockets']} outbound WAN sockets verified, zero C2 beacons)")
+
+    # 8. Evaluate User Activity & Removable Media Trails
+    if useract_txt:
+        rem_trails = re.findall(r'(\[.+?\])\s+(.+?\.lnk)\s+:\s+(.+?\s+\(Accessed:\s+[\d\-:\s]+\))', useract_txt)
+        for tag, lnk, details in rem_trails:
+            findings["removable_footprints"].append(f"{tag} {lnk} -> {details}")
+
+        if rem_trails:
+            findings["risk_exposures"].append(f"Removable media footprint: {len(rem_trails)} recent shell link(s) point to external volumes/shares")
+
+        script_trails = re.findall(r'Binary/Script Shortcuts\s+:\s+Found\s+(\d+)', useract_txt)
+        if script_trails and int(script_trails[0]) > 0:
+            findings["risk_exposures"].append(f"Recent execution footprints found {script_trails[0]} script/binary shortcut(s) in user profile")
+
     # Final Score & Level
     findings["threat_score"] = min(100, score)
     if findings["threat_score"] >= 45:
@@ -232,6 +280,11 @@ def generate_text_briefing(findings, ai_summary=None):
         lines.append("\n  [!] SECURITY FINDINGS & ATTACK SURFACE EXPOSURES:")
         for r in findings["risk_exposures"]:
             lines.append(f"    [!] {r}")
+
+    if findings.get("removable_footprints"):
+        lines.append("\n  [*] REMOVABLE / EXTERNAL MEDIA ACCESS TRAILS:")
+        for rf in findings["removable_footprints"][:6]:
+            lines.append(f"    [*] {rf}")
 
     if findings["remediation_actions"]:
         lines.append("\n  [>] PRIORITIZED REMEDIATION ACTIONS (POWERSHELL):")

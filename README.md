@@ -9,11 +9,12 @@ A modular, standalone Windows Incident Response (IR) and Digital Forensics triag
 * **Zero-Install Portable Architecture**: Executes natively using PowerShell 5.1/7+ and optional portable Python 3.12 (via `python_embed`).
 * **Live Volatile Evidence Collection**: Captures running processes, established network connections, ARP tables, logged-on sessions, and DNS cache prior to host shutdown.
 * **Deep Persistence & Evasion Hunting**: Audits Run keys, Tasks, WMI persistence, plus Windows Defender tampering, firewall drops, WDigest plaintext caching, and UAC crippling.
-* **Forensic Artifact Parsing**: Extracts USB connection history (`USBSTOR`), ShimCache (`AppCompatCache`), WLAN profiles, browser history, and in-memory decompressed Prefetch (`.pf`) run counts.
+* **Forensic Artifact Parsing**: Extracts USB connection history (`USBSTOR`), BAM/DAM execution ledgers, UserAssist ROT13, LNK shortcuts, JumpLists, ShimCache (`AppCompatCache`), WLAN profiles, browser history, and in-memory decompressed Prefetch (`.pf`) run counts.
+* **Network Beaconing & C2 Sockets**: Audits live outbound TCP WAN sockets against standard C2 ports (Cobalt Strike, Metasploit, Sliver, Mythic), dynamic DNS indicators, and listening attack surfaces.
+* **Live Field Sentinel Watch Mode**: Real-time tactical HUD continuously monitoring live process creation, removable USB insertions/removals, and new network connections.
 * **Executive Tactical HTML Dashboard**: Compiles all host telemetry into an interactive, offline single-file dark-mode HTML dashboard mapped against the MITRE ATT&CK matrix.
-
 * **Automated IOC Hash Matching**: Hashes files across target paths (MD5/SHA-256) and flags matches against known Indicators of Compromise.
-* **Interactive CLI Master Console**: Unified launcher (`Launch_Toolkit.bat`) providing interactive or single-click automated full-suite execution.
+* **Interactive CLI Master Console**: Unified launcher (`Launch_Toolkit.bat`) providing interactive or single-click automated full-suite execution (15 integrated modules).
 
 ---
 
@@ -36,7 +37,11 @@ A modular, standalone Windows Incident Response (IR) and Digital Forensics triag
 | `13_Domain_Recon.ps1` | PowerShell | Active Directory reconnaissance: Domain Controllers, domain trusts, and AD forest structure. |
 | `14_Prefetch_Hunter.ps1` | PowerShell | In-memory MAM decompression for Windows 10/11 Prefetch (`.pf`), run counts, and timeline analysis. |
 | `15_Defense_Evasion.ps1` | PowerShell | Audits security control tampering: Defender real-time bypasses, injected exclusions, WDigest, and UAC. |
-| `Analyze_Reports.py` | Python | Automated DFIR threat correlation engine: heuristic scoring (0-100) and prioritized remediation. |
+| `16_BAM_Hunter.ps1` | PowerShell | Background Activity Moderator (BAM/DAM) execution ledger: decodes FILETIME timestamps, resolves user SIDs, and flags USB binaries. |
+| `17_Beacon_Hunter.ps1` | PowerShell | Audits live outbound TCP sockets for C2 ports, dynamic DNS TLDs, and external listening attack surface. |
+| `18_User_Activity.ps1` | PowerShell | Forensically parses LNK shell shortcuts, JumpLists, Explorer TypedPaths, and ROT13 UserAssist records for USB trails. |
+| `19_Live_Sentinel.ps1` | PowerShell | Interactive real-time tactical HUD monitoring process creation, removable USB insertions, and new sockets. |
+| `Analyze_Reports.py` | Python | Automated DFIR threat correlation engine: heuristic scoring (0-100), attack surface exposures, and prioritized remediation. |
 | `Generate_HTML_Report.py` | Python | Compiles all triage logs into a dark-mode, single-file offline HTML executive forensic dashboard. |
 
 ---
