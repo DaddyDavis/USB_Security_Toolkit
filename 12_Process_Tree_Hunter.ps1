@@ -161,4 +161,6 @@ Write-Host "  [+] PROCESS TREE AUDIT COMPLETE! Full report saved to:" -Foregroun
 Write-Host "      $ReportFile" -ForegroundColor Yellow
 Write-Host ("=" * 70) + "`n" -ForegroundColor Green
 
-if (-not $env:IN_TOOLKIT_LOOP) { Read-Host "`n  Press Enter to close window..." }
+if (-not $env:IN_TOOLKIT_LOOP -and -not [Console]::IsInputRedirected) { 
+    try { Read-Host "`n  Press Enter to close window..." } catch {} 
+}

@@ -59,6 +59,9 @@ echo    [9] Browser History and Downloads        (Python - Edge/Chrome SQLite Ex
 echo    [S] ShimCache Execution Forensics        (Python - Historical Runs, Deleted Binaries)
 echo    [T] Process Tree and Anomaly Hunter      (PowerShell - Parent-Child, Encoded Cmds)
 echo    [D] Domain and Network Share Recon       (PowerShell - Kerberos, SMB Shares)
+echo    [F] Prefetch Execution Forensics         (PowerShell - MAM Decompress, Run Counts)
+echo    [E] Defense Evasion & Tampering Hunter   (PowerShell - Defender, Firewall, Logging)
+echo    [H] Generate Executive HTML Report       (Python - Unified Threat Dashboard)
 echo.
 echo    --- AUTOMATION AND REMEDIATION ---
 echo    [A] FULL AUTOMATED FIELD SWEEP (Run all forensic modules in automated sequence)
@@ -70,7 +73,7 @@ echo.
 echo ==============================================================================================
 
 set "USER_CHOICE="
-set /p "USER_CHOICE=  [?] Select an option [1-9, S, T, D, A, R, O, P, 0]: "
+set /p "USER_CHOICE=  [?] Select an option [1-9, S, T, D, F, E, H, A, R, O, P, 0]: "
 
 if not defined USER_CHOICE goto MENU
 set "USER_CHOICE=!USER_CHOICE: =!"
@@ -87,6 +90,9 @@ if /i "!USER_CHOICE!"=="9" goto OP_9
 if /i "!USER_CHOICE!"=="S" goto OP_SHIM
 if /i "!USER_CHOICE!"=="T" goto OP_TREE
 if /i "!USER_CHOICE!"=="D" goto OP_DOMAIN
+if /i "!USER_CHOICE!"=="F" goto OP_PREFETCH
+if /i "!USER_CHOICE!"=="E" goto OP_DEFENSE
+if /i "!USER_CHOICE!"=="H" goto OP_HTML
 if /i "!USER_CHOICE!"=="A" goto OP_SWEEP
 if /i "!USER_CHOICE!"=="R" goto OP_REMEDIATE
 if /i "!USER_CHOICE!"=="O" goto OP_OPEN_REPORTS
@@ -235,46 +241,92 @@ set "DUMMY="
 set /p "DUMMY=  Press Enter to return to menu... "
 goto MENU
 
+:OP_PREFETCH
+cls
+echo [*] Executing 14_Prefetch_Hunter.ps1...
+powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp014_Prefetch_Hunter.ps1"
+echo.
+set "DUMMY="
+set /p "DUMMY=  Press Enter to return to menu... "
+goto MENU
+
+:OP_DEFENSE
+cls
+echo [*] Executing 15_Defense_Evasion.ps1...
+powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp015_Defense_Evasion.ps1"
+echo.
+set "DUMMY="
+set /p "DUMMY=  Press Enter to return to menu... "
+goto MENU
+
+:OP_HTML
+cls
+if "!PY_CMD!"=="" (
+    where python >nul 2>&1
+    if !ERRORLEVEL! equ 0 (
+        set "PY_CMD=python"
+    ) else (
+        echo [-] Python runtime required to compile HTML dashboard. Run option [P] first.
+        echo.
+        set "DUMMY="
+        set /p "DUMMY=  Press Enter to return to menu... "
+        goto MENU
+    )
+)
+echo [*] Compiling unified executive HTML dashboard with !PY_CMD!...
+"!PY_CMD!" "%~dp0Generate_HTML_Report.py"
+echo.
+set "DUMMY="
+set /p "DUMMY=  Press Enter to return to menu... "
+goto MENU
+
 :OP_SWEEP
 cls
 echo ==============================================================================================
-echo   [*] COMMENCING FULL AUTOMATED FORENSIC AND TRIAGE FIELD SWEEP
+echo   [*] COMMENCING FULL AUTOMATED FORENSIC AND TRIAGE FIELD SWEEP (12 MODULES)
 echo ==============================================================================================
 echo.
-echo [1/10] Running Live Host Posture Triage...
+echo [1/12] Running Live Host Posture Triage...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp001_Triage_Windows.ps1"
 echo.
-echo [2/10] Running USB Connection Forensics...
+echo [2/12] Running USB Connection Forensics...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp003_USB_Forensics.ps1"
 echo.
-echo [3/10] Running Advanced Persistence Hunter...
+echo [3/12] Running Advanced Persistence Hunter...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp004_Persistence_Hunter.ps1"
 echo.
-echo [4/10] Running Volatile Memory and Session Snapshot...
+echo [4/12] Running Volatile Memory and Session Snapshot...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp005_Volatile_Evidence.ps1"
 echo.
-echo [5/10] Running Windows Security Event Log Hunter...
+echo [5/12] Running Windows Security Event Log Hunter...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp007_Event_Log_Hunter.ps1"
 echo.
-echo [6/10] Running Wi-Fi Profiles and Stored Credentials...
+echo [6/12] Running Wi-Fi Profiles and Stored Credentials...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp008_WiFi_Forensics.ps1"
 echo.
-echo [7/10] Running Process Tree and Anomaly Hunter...
+echo [7/12] Running Process Tree and Anomaly Hunter...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp012_Process_Tree_Hunter.ps1"
 echo.
-echo [8/10] Running Domain and Network Share Recon...
+echo [8/12] Running Domain and Network Share Recon...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp013_Domain_Recon.ps1"
 echo.
-if "!PY_CMD!"=="" goto SKIP_SWEEP_PY
-echo [9/10] Running Browser History and Download Artifacts...
-"!PY_CMD!" "%~dp009_Browser_Artifacts.py"
+echo [9/12] Running Prefetch Execution Forensics...
+powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp014_Prefetch_Hunter.ps1"
 echo.
-echo [10/10] Running ShimCache Execution Forensics...
+echo [10/12] Running Defense Evasion and Tampering Audit...
+powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp015_Defense_Evasion.ps1"
+echo.
+if "!PY_CMD!"=="" goto SKIP_SWEEP_PY
+echo [11/12] Running Browser History, Downloads, and ShimCache Forensics...
+"!PY_CMD!" "%~dp009_Browser_Artifacts.py"
 "!PY_CMD!" "%~dp011_ShimCache_Parser.py"
+echo.
+echo [12/12] Generating Unified Executive HTML Forensic Dashboard...
+"!PY_CMD!" "%~dp0Generate_HTML_Report.py"
 goto END_SWEEP_PY
 
 :SKIP_SWEEP_PY
-echo [9/10] Skipping Browser and ShimCache Artifacts - Python runtime not detected.
+echo [11/12] Skipping Python-specific modules - Python runtime not detected.
 
 :END_SWEEP_PY
 echo.
