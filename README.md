@@ -1,16 +1,16 @@
-# USB Security & Forensics Incident Response Toolkit 🛡️🔍
+# USB Security and Forensics Incident Response Toolkit
 
 A modular, standalone Windows Incident Response (IR) and Digital Forensics triage framework engineered to run directly from a portable USB drive. Built for rapid, live-host artifact collection, forensic triage, and malicious persistence hunting without leaving a heavy footprint on the target system.
 
 ---
 
-## ⚡ Key Features
+## Key Features
 
 * **Zero-Install Portable Architecture**: Executes natively using PowerShell 5.1/7+ and optional portable Python 3.12 (via `python_embed`).
 * **Live Volatile Evidence Collection**: Captures running processes, established network connections, ARP tables, logged-on sessions, and DNS cache prior to host shutdown.
-* **Deep Persistence & Evasion Hunting**: Audits Run keys, Tasks, WMI persistence, plus Windows Defender tampering, firewall drops, WDigest plaintext caching, and UAC crippling.
+* **Deep Persistence and Evasion Hunting**: Audits Run keys, Tasks, WMI persistence, plus Windows Defender tampering, firewall drops, WDigest plaintext caching, and UAC crippling.
 * **Forensic Artifact Parsing**: Extracts USB connection history (`USBSTOR`), BAM/DAM execution ledgers, UserAssist ROT13, LNK shortcuts, JumpLists, ShimCache (`AppCompatCache`), WLAN profiles, browser history, and in-memory decompressed Prefetch (`.pf`) run counts.
-* **Network Beaconing & C2 Sockets**: Audits live outbound TCP WAN sockets against standard C2 ports (Cobalt Strike, Metasploit, Sliver, Mythic), dynamic DNS indicators, and listening attack surfaces.
+* **Network Beaconing and C2 Sockets**: Audits live outbound TCP WAN sockets against standard C2 ports (Cobalt Strike, Metasploit, Sliver, Mythic), dynamic DNS indicators, and listening attack surfaces.
 * **Live Field Sentinel Watch Mode**: Real-time tactical HUD continuously monitoring live process creation, removable USB insertions/removals, and new network connections.
 * **Executive Tactical HTML Dashboard**: Compiles all host telemetry into an interactive, offline single-file dark-mode HTML dashboard mapped against the MITRE ATT&CK matrix.
 * **Automated IOC Hash Matching**: Hashes files across target paths (MD5/SHA-256) and flags matches against known Indicators of Compromise.
@@ -18,7 +18,7 @@ A modular, standalone Windows Incident Response (IR) and Digital Forensics triag
 
 ---
 
-## 🗂️ Module Architecture
+## Module Architecture
 
 | Module | Engine | Description |
 | :--- | :--- | :--- |
@@ -46,7 +46,7 @@ A modular, standalone Windows Incident Response (IR) and Digital Forensics triag
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Portable USB Deployment
 1. Clone or copy this repository to the root of your USB drive:
@@ -66,6 +66,6 @@ All triage logs and reports are automatically timestamped and exported into the 
 
 ---
 
-## ⚖️ License & Disclaimer
+## License and Disclaimer
 
 This toolkit is designed for authorized digital forensics, security auditing, and educational use by cybersecurity professionals, system administrators, and incident response personnel. Ensure proper authorization before analyzing systems you do not own.
