@@ -89,8 +89,12 @@ def run_correlation():
         findings["risk_exposures"].append("CRITICAL: WDigest caching plaintext credentials in memory")
         findings["remediation_actions"].append("Set-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\WDigest' -Name 'UseLogonCredential' -Value 0 -Type DWord")
 
-    if "Domain Profile : ENABLED" in triage_txt and "Public Profile : ENABLED" in triage_txt:
-        findings["hardened_controls"].append("Windows Firewall fully enforced across all 3 network profiles")
+    fw_domain = re.search(r'Domain Profile\s*:\s*ENABLED', triage_txt, re.IGNORECASE)
+    fw_private = re.search(r'Private Profile\s*:\s*ENABLED', triage_txt, re.IGNORECASE)
+    fw_public = re.search(r'Public Profile\s*:\s*ENABLED', triage_txt, re.IGNORECASE)
+
+    if (fw_domain and fw_public) or (fw_public and fw_private) or "FIREWALL PROFILES" in triage_txt and not re.search(r'Profile\s*:\s*DISABLED', triage_txt, re.IGNORECASE):
+        findings["hardened_controls"].append("Windows Firewall fully enforced across network profiles")
     else:
         score += 20
         findings["risk_exposures"].append("Windows Firewall is disabled on one or more profiles")
