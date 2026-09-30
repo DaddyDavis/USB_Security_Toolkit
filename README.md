@@ -14,7 +14,7 @@ A modular, standalone Windows Incident Response (IR) and Digital Forensics triag
 * **Live Field Sentinel Watch Mode**: Real-time tactical HUD continuously monitoring live process creation, removable USB insertions/removals, and new network connections.
 * **Executive Tactical HTML Dashboard**: Compiles all host telemetry into an interactive, offline single-file dark-mode HTML dashboard mapped against the MITRE ATT&CK matrix.
 * **Automated IOC Hash Matching**: Hashes files across target paths (MD5/SHA-256) and flags matches against known Indicators of Compromise.
-* **Interactive CLI Master Console**: Unified launcher (`Launch_Toolkit.bat`) providing interactive or single-click automated full-suite execution (15 integrated modules).
+* **Interactive CLI Master Console**: Unified launcher (`Launch_Toolkit.bat`) providing an interactive menu or a single-click automated 18-action forensic pipeline with headless CLI exit-code support.
 
 ---
 
@@ -29,7 +29,7 @@ A modular, standalone Windows Incident Response (IR) and Digital Forensics triag
 | `05_Volatile_Evidence.ps1` | PowerShell | Dumps volatile memory triage, active TCP/UDP sockets, process owner mapping, and ARP cache. |
 | `06_File_Hasher_IOC.py` | Python | Multithreaded MD5/SHA-256 file hashing against `ioc_hashes.txt` threat signatures. |
 | `07_Event_Log_Hunter.ps1` | PowerShell | Queries Windows Event Logs for critical Event IDs (4624/4625 logons, 4688 process creation, 4104 script blocks). |
-| `08_WiFi_Forensics.ps1` | PowerShell | Extracts wireless network profiles, SSIDs, connection history, and authentication types. |
+| `08_WiFi_Forensics.ps1` | PowerShell | Extracts wireless network profiles, SSIDs, connection history, and authentication types (redacted by default). |
 | `09_Browser_Artifacts.py` | Python | Triages Chromium, Edge, and Firefox history, downloads, and search terms. |
 | `10_Quick_Remediate.ps1` | PowerShell | Rapid containment module: terminate suspicious processes, disable NICs, or isolate host. |
 | `11_ShimCache_Parser.py` | Python | Parses `AppCompatCache` from the SYSTEM hive to identify historical program execution. |
@@ -43,6 +43,40 @@ A modular, standalone Windows Incident Response (IR) and Digital Forensics triag
 | `19_Live_Sentinel.ps1` | PowerShell | Interactive real-time tactical HUD monitoring process creation, removable USB insertions, and new sockets. |
 | `Analyze_Reports.py` | Python | Automated DFIR threat correlation engine: heuristic scoring (0-100), attack surface exposures, and prioritized remediation. |
 | `Generate_HTML_Report.py` | Python | Compiles all triage logs into a dark-mode, single-file offline HTML executive forensic dashboard. |
+
+---
+
+## Automation Pipeline vs. Interactive Field Modules
+
+To maintain forensic integrity and prevent accidental host state alteration during automated sweeps, the toolkit cleanly separates automated passive collection from interactive modules:
+
+* **18-Action Automated Field Sweep (Option `[A]` or `Launch_Toolkit.bat --sweep`)**:
+  Executes all passive, non-destructive triage modules sequentially:
+  1. `01_Triage_Windows.ps1` (Host posture & baseline)
+  2. `03_USB_Forensics.ps1` (USBSTOR registry & serials)
+  3. `04_Persistence_Hunter.ps1` (Run keys, tasks, WMI)
+  4. `05_Volatile_Evidence.ps1` (Sockets, ARP, sessions)
+  5. `07_Event_Log_Hunter.ps1` (Security event IDs)
+  6. `08_WiFi_Forensics.ps1` (Wireless profiles, OPSEC redacted)
+  7. `12_Process_Tree_Hunter.ps1` (Parent-child anomalies)
+  8. `13_Domain_Recon.ps1` (Domain & SMB shares)
+  9. `14_Prefetch_Hunter.ps1` (MAM decompressed Prefetch)
+  10. `15_Defense_Evasion.ps1` (Defender & security tampering)
+  11. `16_BAM_Hunter.ps1` (BAM/DAM execution ledger)
+  12. `17_Beacon_Hunter.ps1` (Outbound C2 sockets)
+  13. `18_User_Activity.ps1` (LNKs, JumpLists, UserAssist)
+  14. `09_Browser_Artifacts.py` (Browser databases)
+  15. `11_ShimCache_Parser.py` (AppCompatCache history)
+  16. `06_File_Hasher_IOC.py` (File hashing & IOC match)
+  17. `Analyze_Reports.py` (Heuristic scoring & threat analysis)
+  18. `Generate_HTML_Report.py` (Unified executive HTML dashboard)
+
+* **Intentionally Excluded Interactive Modules (Operator Initiated)**:
+  * **`10_Quick_Remediate.ps1` (Option `[R]`)**: Active host containment (killing processes, isolating network adapters, disabling suspicious accounts). Excluded from automation to prevent accidental disruption to target hosts without explicit forensic operator consent.
+  * **`19_Live_Sentinel.ps1` (Option `[W]`)**: Real-time continuous monitoring HUD designed for live surveillance of process spawns, network sockets, and USB insertions. Excluded because it runs as a persistent watch loop rather than a batch collection task.
+
+* **Headless Automation & Exit Codes**:
+  `Launch_Toolkit.bat --sweep` executes the 18-action sequence non-interactively and returns an exit code equal to the number of failed modules (`exit /b !SWEEP_FAILS!`), enabling reliable integration into external automation pipelines.
 
 ---
 

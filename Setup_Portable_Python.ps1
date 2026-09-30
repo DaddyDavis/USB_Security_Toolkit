@@ -12,11 +12,13 @@ if (-not (Test-Path $DestDir)) {
     New-Item -ItemType Directory -Path $DestDir -Force | Out-Null
 }
 
-Write-Host "[*] Downloading official Python 3.12 Embeddable package (11 MB)..." -ForegroundColor Cyan
-curl.exe -L -s -o $ZipPath $Url
+Write-Host "[*] Downloading official Python 3.12 Embeddable package via TLS 1.2+ HTTPS (11 MB)..." -ForegroundColor Cyan
+& curl.exe --proto '=https' --tlsv1.2 --fail --show-error -L -s -o $ZipPath $Url
+$curlExit = $LASTEXITCODE
 
-if (-not (Test-Path $ZipPath)) {
-    Write-Host "[!] Download failed. Check network connectivity." -ForegroundColor Red
+if ($curlExit -ne 0 -or -not (Test-Path $ZipPath) -or (Get-Item $ZipPath).Length -eq 0) {
+    Write-Host "[!] Download failed (curl exit code: $curlExit). Verify HTTPS connectivity and TLS stack." -ForegroundColor Red
+    if (Test-Path $ZipPath) { Remove-Item $ZipPath -Force }
     exit 1
 }
 
