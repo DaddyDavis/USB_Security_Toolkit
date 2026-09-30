@@ -350,65 +350,105 @@ goto MENU
 :OP_SWEEP
 cls
 echo ==============================================================================================
-echo   [*] COMMENCING FULL AUTOMATED FORENSIC AND TRIAGE FIELD SWEEP (15 MODULES)
+echo   [*] COMMENCING FULL AUTOMATED FORENSIC AND TRIAGE FIELD SWEEP
+echo   [*] Note: 19_Live_Sentinel and 10_Quick_Remediate are interactive and excluded from sweep.
 echo ==============================================================================================
 echo.
+set "SWEEP_FAILS=0"
+
 echo [1/15] Running Live Host Posture Triage...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp001_Triage_Windows.ps1"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 & echo [!] WARNING: 01_Triage_Windows returned error code !ERRORLEVEL! )
 echo.
+
 echo [2/15] Running USB Connection Forensics...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp003_USB_Forensics.ps1"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 & echo [!] WARNING: 03_USB_Forensics returned error code !ERRORLEVEL! )
 echo.
+
 echo [3/15] Running Advanced Persistence Hunter...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp004_Persistence_Hunter.ps1"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 & echo [!] WARNING: 04_Persistence_Hunter returned error code !ERRORLEVEL! )
 echo.
+
 echo [4/15] Running Volatile Memory and Session Snapshot...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp005_Volatile_Evidence.ps1"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 & echo [!] WARNING: 05_Volatile_Evidence returned error code !ERRORLEVEL! )
 echo.
+
 echo [5/15] Running Windows Security Event Log Hunter...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp007_Event_Log_Hunter.ps1"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 & echo [!] WARNING: 07_Event_Log_Hunter returned error code !ERRORLEVEL! )
 echo.
-echo [6/15] Running Wi-Fi Profiles and Stored Credentials...
+
+echo [6/15] Running Wi-Fi Profiles and Stored Credentials (REDACTED OPSEC MODE)...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp008_WiFi_Forensics.ps1"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 & echo [!] WARNING: 08_WiFi_Forensics returned error code !ERRORLEVEL! )
 echo.
+
 echo [7/15] Running Process Tree and Anomaly Hunter...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp012_Process_Tree_Hunter.ps1"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 & echo [!] WARNING: 12_Process_Tree_Hunter returned error code !ERRORLEVEL! )
 echo.
+
 echo [8/15] Running Domain and Network Share Recon...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp013_Domain_Recon.ps1"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 & echo [!] WARNING: 13_Domain_Recon returned error code !ERRORLEVEL! )
 echo.
+
 echo [9/15] Running Prefetch Execution Forensics...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp014_Prefetch_Hunter.ps1"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 & echo [!] WARNING: 14_Prefetch_Hunter returned error code !ERRORLEVEL! )
 echo.
+
 echo [10/15] Running Defense Evasion and Tampering Audit...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp015_Defense_Evasion.ps1"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 & echo [!] WARNING: 15_Defense_Evasion returned error code !ERRORLEVEL! )
 echo.
+
 echo [11/15] Running BAM/DAM User Execution Forensics...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp016_BAM_Hunter.ps1"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 & echo [!] WARNING: 16_BAM_Hunter returned error code !ERRORLEVEL! )
 echo.
+
 echo [12/15] Running Network Beaconing and C2 Socket Audit...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp017_Beacon_Hunter.ps1"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 & echo [!] WARNING: 17_Beacon_Hunter returned error code !ERRORLEVEL! )
 echo.
+
 echo [13/15] Running User Activity and Removable Media Footprints...
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "%~dp018_User_Activity.ps1"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 & echo [!] WARNING: 18_User_Activity returned error code !ERRORLEVEL! )
 echo.
+
 if "!PY_CMD!"=="" goto SKIP_SWEEP_PY
-echo [14/15] Running Browser History, Downloads, and ShimCache Forensics...
+echo [14/15] Running Browser Artifacts, ShimCache Parser, and File Hasher / IOC Matcher...
 "!PY_CMD!" "%~dp009_Browser_Artifacts.py"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 )
 "!PY_CMD!" "%~dp011_ShimCache_Parser.py"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 )
+"!PY_CMD!" "%~dp006_File_Hasher_IOC.py"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 )
 echo.
+
 echo [15/15] Running Automated Threat Analyst Engine & Executive HTML Dashboard...
 "!PY_CMD!" "%~dp0Analyze_Reports.py"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 )
 "!PY_CMD!" "%~dp0Generate_HTML_Report.py"
+if !ERRORLEVEL! neq 0 ( set /a SWEEP_FAILS+=1 )
 goto END_SWEEP_PY
 
 :SKIP_SWEEP_PY
-echo [11/12] Skipping Python-specific modules - Python runtime not detected.
+echo [!] Skipping Python modules (06_Hasher, 09_Browser, 11_ShimCache, Analyze, HTML) - Python not detected.
 
 :END_SWEEP_PY
 echo.
 echo ==============================================================================================
-echo   [+] ALL FIELD SWEEP MODULES COMPLETED SUCCESSFULLY!
+if !SWEEP_FAILS! equ 0 (
+    echo   [+] ALL FIELD SWEEP MODULES COMPLETED SUCCESSFULLY WITH 0 FAILURES!
+) else (
+    echo   [!] SWEEP FINISHED WITH !SWEEP_FAILS! MODULE ERRORS - CHECK LOGS ABOVE.
+)
 echo   [+] Comprehensive reports and CSV spreadsheets saved to: %~dp0Reports\
 echo ==============================================================================================
 echo.

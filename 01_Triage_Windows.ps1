@@ -58,30 +58,46 @@ Write-Item "Last Boot Time" "$($os.LastBootUpTime)"
 
 # Defensive Posture & Antivirus
 Write-Section "DEFENSIVE POSTURE & ANTIVIRUS TELEMETRY"
+
+# Authoritative Defender Status via Get-MpComputerStatus
+$mpChecked = $false
 try {
-    $avProducts = Get-CimInstance -Namespace "root\SecurityCenter2" -ClassName "AntivirusProduct" -ErrorAction Stop
-    foreach ($av in $avProducts) {
-        # High bit 0x10000 = Real-time protection enabled
-        $realtime = if ([int]$av.productState -band 0x10000) { "ENABLED" } else { "DISABLED/SUSPENDED" }
-        $rtStatus = if ($realtime -eq "ENABLED") { "GOOD" } else { "ALERT" }
-        Write-Item "Antivirus Engine" "$($av.displayName)" "INFO"
-        Write-Item "Real-Time Protection" "$realtime (State: $($av.productState))" $rtStatus
-        Write-Item "Binary Path" "$($av.pathToSignedProductExe)" "INFO"
+    $mp = Get-MpComputerStatus -ErrorAction SilentlyContinue
+    if ($mp) {
+        $mpChecked = $true
+        $rtpEnabled = $mp.RealTimeProtectionEnabled -eq $true
+        $rtStatus = if ($rtpEnabled) { "GOOD" } else { "ALERT" }
+        Write-Item "Antivirus Engine" "Microsoft Defender Antivirus (Mode: $($mp.AMRunningMode))" "INFO"
+        Write-Item "Real-Time Protection" $(if ($rtpEnabled) { "ENABLED (Active Telemetry)" } else { "DISABLED / TAMPERED" }) $rtStatus
+        Write-Item "Engine Version" "$($mp.AMEngineVersion)" "INFO"
+
+        if ($mp.AntivirusSignatureLastUpdated) {
+            $sigAge = (New-TimeSpan -Start $mp.AntivirusSignatureLastUpdated -End (Get-Date)).Days
+            $sigStatus = if ($sigAge -le 3) { "GOOD" } elseif ($sigAge -le 7) { "WARN" } else { "ALERT" }
+            Write-Item "Signatures Updated" "$($mp.AntivirusSignatureLastUpdated) ($sigAge days old)" $sigStatus
+        }
+    }
+} catch {}
+
+# Secondary / Third-Party SecurityCenter2 Telemetry
+try {
+    $avProducts = Get-CimInstance -Namespace "root\SecurityCenter2" -ClassName "AntivirusProduct" -ErrorAction SilentlyContinue
+    if ($avProducts) {
+        foreach ($av in $avProducts) {
+            if (-not $mpChecked -or $av.displayName -notmatch "Windows Defender") {
+                $hex = "{0:X6}" -f [int]$av.productState
+                $scannerByte = $hex.Substring(2, 2)
+                $realtime = if ($scannerByte -in "10", "11") { "ENABLED" } else { "DISABLED/SUSPENDED" }
+                $rtStatus = if ($realtime -eq "ENABLED") { "GOOD" } else { "ALERT" }
+                Write-Item "Third-Party AV" "$($av.displayName)" "INFO"
+                Write-Item "Protection Status" "$realtime (State: 0x$hex)" $rtStatus
+            }
+        }
     }
 } catch {
     Write-Item "Antivirus WMI" "Unable to query SecurityCenter2 (May require elevation or Server OS)" "WARN"
 }
 
-# Defender Definition Status
-try {
-    $mp = Get-MpComputerStatus -ErrorAction SilentlyContinue
-    if ($mp) {
-        $sigAge = (New-TimeSpan -Start $mp.AntivirusSignatureLastUpdated -End (Get-Date)).Days
-        $sigStatus = if ($sigAge -le 3) { "GOOD" } elseif ($sigAge -le 7) { "WARN" } else { "ALERT" }
-        Write-Item "Defender Engine" "Version $($mp.AMEngineVersion)" "INFO"
-        Write-Item "Signatures Updated" "$($mp.AntivirusSignatureLastUpdated) ($sigAge days old)" $sigStatus
-    }
-} catch {}
 
 # BitLocker & Drive Encryption
 try {

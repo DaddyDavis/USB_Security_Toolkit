@@ -85,6 +85,50 @@ def audit_suspicious_processes():
   suspicious_indicators = ["appdata", "temp", "public", "downloads"]
   flagged = []
 
+  # Primary modern method: PowerShell Get-CimInstance
+  try:
+    ps_cmd = [
+        "powershell.exe",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "Get-CimInstance Win32_Process | Select-Object ProcessId,Name,Path | ConvertTo-Csv -NoTypeInformation",
+    ]
+    res = subprocess.run(ps_cmd, capture_output=True, text=True, timeout=12)
+    if res.returncode == 0 and res.stdout.strip():
+      import csv
+      reader = csv.DictReader(res.stdout.splitlines())
+      for row in reader:
+        pid = row.get("ProcessId", "")
+        name = row.get("Name", "")
+        exe_path = row.get("Path", "") or ""
+        if exe_path:
+          path_lower = exe_path.lower()
+          if any(ind in path_lower for ind in suspicious_indicators):
+            flagged.append({"pid": pid, "name": name, "path": exe_path})
+      return flagged
+  except Exception:
+    pass
+
+  # Secondary fallback: tasklist.exe /V
+  try:
+    res = subprocess.run(["tasklist.exe", "/V", "/FO", "CSV"], capture_output=True, text=True, timeout=10)
+    if res.returncode == 0 and res.stdout.strip():
+      import csv
+      reader = csv.reader(res.stdout.splitlines())
+      header = next(reader, None)
+      for row in reader:
+        if len(row) >= 2:
+          name = row[0]
+          pid = row[1]
+          # check process name or module
+          if any(ind in name.lower() for ind in suspicious_indicators):
+            flagged.append({"pid": pid, "name": name, "path": "N/A (Tasklist)"})
+      return flagged
+  except Exception:
+    pass
+
+  # Tertiary fallback: deprecated wmic only if present
   try:
     cmd = ["wmic", "process", "get", "ProcessId,Name,ExecutablePath", "/format:csv"]
     res = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
@@ -104,6 +148,7 @@ def audit_suspicious_processes():
     pass
 
   return flagged
+
 
 
 def audit_listening_ports():

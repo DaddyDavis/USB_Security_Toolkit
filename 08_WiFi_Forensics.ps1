@@ -8,7 +8,9 @@
 #>
 
 [CmdletBinding()]
-param()
+param(
+    [switch]$DumpPlaintext
+)
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $ReportDir = Join-Path $ScriptDir "Reports"
@@ -67,7 +69,8 @@ try {
             $hasKey = [regex]::Match($detailRaw, 'Security key\s*:\s*(.+)')
 
             if ($keyMatch.Success) {
-                $password = $keyMatch.Groups[1].Value.Trim()
+                $rawPass = $keyMatch.Groups[1].Value.Trim()
+                $password = if ($DumpPlaintext) { $rawPass } else { "[STORED: REDACTED (Use -DumpPlaintext)]" }
                 $status = "GOOD"
             } elseif ($hasKey.Success -and $hasKey.Groups[1].Value.Trim() -match 'Absent') {
                 $password = "[INSECURE: OPEN NETWORK]"
